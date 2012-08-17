@@ -11,46 +11,43 @@ exports.init = function (test) {
 };
 
 exports.testCRUD = function (test) {
-    try {
-        var file = new fs.File('/foo', {
-            'test':true
+    var file = new fs.File('/foo', {
+        'test':true
+    });
+
+    // write file
+    filesystem.writeFile(file, function (file) {
+        fileWritten(file);
+    });
+    // check file exists
+    function fileWritten(file) {
+        filesystem.fileExists(file.path(), function(bool) {
+            test.ok(bool === true, "File does not exist");
+            fileRead(file)
         });
-
-        // write file
-        filesystem.writeFile(file, function () {
-            fileWritten.apply(arguments);
+    }
+    // read file again
+    function fileDoesExist() {
+        filesystem.readFile(file.path(), function(file) {
+            fileRead(file)
         });
-        // read file again
-        function fileWritten() {
-            filesystem.readFile(file.path(), function(file) {
-                fileRead(file)
-            });
-        }
-        function fileRead(file) {
-            dump(arguments)
-            test.ok(file.test, 'Test property of file was not true');
-
-            filesystem.deleteFile(file, function(bool) {
-                fileDeleted(bool);
-            });
-        }
-        // check if file still exists
-        function fileDeleted() {
-            test.ok(bool === true, 'File was expected to be deleted');
-            filesystem.fileExists('/foo', function() {
-                fileRequested.apply(arguments);
-            });
-        }
-        function fileRequested(bool) {
-            test.ok(bool === false, "File does exist");
-        }
-        test.done();
     }
-    catch (error) {
+    function fileRead(file) {
+        test.ok(file.test, 'Test property of file was not true');
+
+        filesystem.deleteFile(file, function(bool) {
+            fileDeleted(bool);
+        });
     }
-
-};
-
-exports.testFileExists = function (test) {
+    // check if file still exists
+    function fileDeleted(bool) {
+        test.ok(bool === true, 'File was expected to be deleted');
+        filesystem.fileExists('/foo', function() {
+            fileRequested.apply(arguments);
+        });
+    }
+    function fileRequested(bool) {
+        test.ok(bool === false, "File does exist");
+    }
     test.done();
 };

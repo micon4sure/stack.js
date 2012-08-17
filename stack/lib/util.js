@@ -30,7 +30,7 @@ function getClass (obj) {
 exports.simpleDump = function(stuff) {
     new Dump().flat(stuff)
     console.log(stuff);
-    console.log("@" + trace.get()[1].getFileName(), '#' + trace.get()[1].getLineNumber())
+    console.log("@" + trace.get()[1].getFileName(), '#' + trace.get()[1].getLineNumber() + "\n")
 };
 
 /**

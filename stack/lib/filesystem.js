@@ -12,7 +12,7 @@ var Filesystem = function(url, name) {
 }
 
 Error_CouldNotReadFile = function(response) {
-    this.body = response;
+    this.response = response;
 };
 Error_CouldNotWriteFile = function(response) {
     this.response = response;
@@ -20,14 +20,32 @@ Error_CouldNotWriteFile = function(response) {
 Error_CouldNotDeleteFile = function(response) {
     this.response = response;
 };
+Error_CouldNotCheckForFileExists = function(response) {
+    this.response = response;
+};
+
+// set toString for exception prototypes
+Error_CouldNotReadFile.prototype = Error_CouldNotWriteFile.prototype = Error_CouldNotDeleteFile.prototype = Error_CouldNotCheckForFileExists.prototype = {
+    toString: function() {
+        console.log("ERROR RESPONSE");
+        dump(this.response)
+    }
+};
 
 Filesystem.prototype = {
 
-
+    /**
+     * Destroy the database
+     * @param callback
+     */
     nuke: function(callback) {
         this._nano.db.destroy(this._name, callback);
     },
 
+    /**
+     * Create the database
+     * @param callback
+     */
     init: function(callback) {
         this._nano.db.create(this._name, callback);
     },
@@ -76,12 +94,11 @@ Filesystem.prototype = {
      * @param callback
      */
     deleteFile: function(file, callback) {
-        this.db.destroy_document(file.path(), file._rev, function(error, response) {
+        this.db.destroy(file.path(), file.rev(), function(error, response) {
             if(error !== null) {
-                dump(file)
-                dump(error)
                 throw new Error_CouldNotDeleteFile(response);
             }
+            callback(response.ok);
         });
     },
 
@@ -92,33 +109,76 @@ Filesystem.prototype = {
      */
     fileExists: function(path, callback) {
         this.db.head(path, function requestCompleted(error, response) {
-            // check for error
-
-
+            if(error !== null && error.status_code != 404) {
+                throw new Error_CouldNotCheckForFileExists(error);
+            }
+            callback(error === null);
         });
     }
 };
 
-
+/**
+ * @param path
+ * @param data
+ * @constructor
+ */
 var File = function(path, data) {
-    this._id = path;
+    if(data === undefined) {
+        data = {};
+    }
+    data._id = path
     this._data = data;
 };
+
 File.prototype = {
+    /**
+     * Set a file property
+     * @param key
+     * @param value
+     * @return {*}
+     */
     set: function(key, value) {
         this._data[key] = value;
         return this;
     },
+    /**
+     * Get a file property
+     * @param key
+     * @return {*}
+     */
     get: function(key) {
         return this._data[key];
     },
+    /**
+     * Get the file path (which is also the _id)
+     * @return {*}
+     */
     path: function() {
-        return this._id
+        return this._data._id;
     },
+
+    /**
+     * Get revision information, undefined if none
+     * @return {*}
+     */
+    rev: function() {
+        return this._data._rev;
+    },
+
+    /**
+     * Get the whole data of the file
+     * @return {*}
+     */
     data: function() {
         return this._data;
     }
 };
+
+/**
+ * Create a file from document data
+ * @param data
+ * @return {*}
+ */
 File.create = function(data) {
     var file = new File();
     file._data = data;
