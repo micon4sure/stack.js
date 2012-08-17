@@ -23,11 +23,11 @@ exports.testCRUD = function (test) {
     function fileWritten(file) {
         filesystem.fileExists(file.path(), function(bool) {
             test.ok(bool === true, "File does not exist");
-            fileRead(file)
+            fileDoesExist(file)
         });
     }
     // read file again
-    function fileDoesExist() {
+    function fileDoesExist(file) {
         filesystem.readFile(file.path(), function(file) {
             fileRead(file)
         });
