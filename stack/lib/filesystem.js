@@ -126,7 +126,8 @@ var File = function(path, data) {
     if(data === undefined) {
         data = {};
     }
-    data._id = path
+    this._id = path;
+    this._rev = null;
     this._data = data;
 };
 
@@ -154,7 +155,7 @@ File.prototype = {
      * @return {*}
      */
     path: function() {
-        return this._data._id;
+        return this._id;
     },
 
     /**
@@ -162,7 +163,7 @@ File.prototype = {
      * @return {*}
      */
     rev: function() {
-        return this._data._rev;
+        return this._rev;
     },
 
     /**
@@ -181,6 +182,14 @@ File.prototype = {
  */
 File.create = function(data) {
     var file = new File();
+
+    // pick out id and rev, and remove them from data
+    file._id = data._id;
+    file._rev = data._rev;
+
+    delete data._id;
+    delete data._rev;
+
     file._data = data;
     return file;
 }
